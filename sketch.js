@@ -1,16 +1,18 @@
 // ======== ASSIGMENT 02 =========
+
 // PER OGNI GLIFO
 //    - linee che hanno un angolo variabile tra 0/45/90° 
 //      --> creo una sottogriglia per ogni mappa -> passaggio obbligato per punti della sottogriglia
 //    - maggiore probabilità di passaggio verso il centro 
 //      --> inizializzo linea per avere come coordinate iniziali di passaggio in un intorno del centro
 //    - per ogni linea almeno due punti esterni e un punto vicino al centro
+
 // CICLO PER DEFINIRE LOGICA DELLE FERMATE 
 // continua a generare punti a caso finché non ne trova uno che rispetta le condizioni:
 //    - nextX non deve uscire dalla griglia a sx/dx
 //    - nextY non deve uscire dalla griglia in alto/basso   
 //    - se la fermata già stata visitata, ha una probablità 
-//      random<5% fermarsi anche su un punto visitato
+//      random<5% fermarsi su un punto già visitato
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
