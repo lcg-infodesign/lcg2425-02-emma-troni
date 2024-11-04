@@ -1,126 +1,122 @@
 // ASSIGMENT 02 | Algorithmic Gliph generation
-// REFERENCE --> mappe metropolitane: https://www.minniemuse.com/articles/musings/the-subway-map 
 // Per ogni glifo:
-// - linee che hanno un angolo variabile tra 0/45/90° --> creo una sottogriglia per ogni mappa per far si che le linee spezzate delle metro passino per i vertici di tale griglia
-// - maggiore probabilità di passaggio verso il centro --> Prossimo punto + vicino passando per il centro
-// - per ogni linea almeno due punti esterni e un punto vicino al centro
+//    - linee che hanno un angolo variabile tra 0/45/90° 
+//      --> creo una sottogriglia per ogni mappa 
+//    - maggiore probabilità di passaggio verso il centro 
+//      --> Prossimo punto + vicino passando per il centro
+//    - per ogni linea almeno due punti esterni e un punto vicino al centro
 
-let colors = [];
 function setup() {
-    createCanvas(windowWidth, windowHeight);
-    angleMode(DEGREES);
-    noLoop();
-    colors = [
-        'red', 'blue', 'orange'
-    ];
+  createCanvas(windowWidth, windowHeight);
+  frameRate(0.5);
+  noLoop();
 }
 
 function draw() {
-    background("white");
+  background("white");
+  // dim di scalate sulla base di quelle date:
+  let scaleRatio = windowWidth / 1920;
+  let maxUnitSize = 200;
+  let unitSize = maxUnitSize * scaleRatio;
+  // valore massimo del margine = 0.2% della larghezza della finestra
+  let margin = windowWidth * 0.02;
+  // dim contenuto
+  let contentWidth = windowWidth - margin * 2;
+  let contentHeight = windowHeight - margin * 2;
 
-    // calcolo il fattore di scala in base alla dimensione attuale della finestra rispetto alla dimensione massima
-    let maxWindowWidth = 1920;
-    let scaleFactor = windowWidth / maxWindowWidth;
-    // dimensinoe della cella rispetto al fattore di scala
-    let maxCellSize = 200;
-    let cellSize = maxCellSize * scaleFactor;
-    // margine proporzionale alla finestra
-    // pvalore massimo del margine = 5% della larghezza della finestra
-    let maxMarginRatio = 0.02;
-    let margin = windowWidth * maxMarginRatio;
+  // n max di colonne/righe si adatta in base allo spazio disponibile
+  let nColumns = floor(contentWidth / unitSize);
+  let nRows = floor(contentHeight / unitSize);
 
-    // calcolo le dimensioni del contenuto in base alla finestra e al margine
-    let contentWidth = windowWidth - margin * 2;
-    let contentHeight = windowHeight - margin * 2;
+  // dim effettive della griglia
+  let gridWidth = nColumns * unitSize;
+  let gridHeight = nRows * unitSize;
 
-    // n max di colonne/righe si adatta in base allo spazio disponibile
-    let nColumns = floor(contentWidth / cellSize);
-    let nRows = floor(contentHeight / cellSize);
+  // centrare la griglia all'interno della finestra
+  translate((windowWidth - gridWidth) / 2, (windowHeight - gridHeight) / 2);
 
-    // larghezza e altezza effettive della griglia
-    let gridWidth = nColumns * cellSize;
-    let gridHeight = nRows * cellSize;
+  // grid
+  noFill();
+  for (let r = 0; r < nRows; r++) {
+      for (let c = 0; c < nColumns; c++) {
+          push();
+          translate(c * unitSize, r * unitSize);
+          drawMap(unitSize, scaleRatio);
+          pop();
 
-    // centrare la griglia all'interno della finestra
-    // translate(margin,margin)
-    // calcolo le distanze per 
-    let contentX = (windowWidth - gridWidth) / 2;
-    let contentY = (windowHeight - gridHeight) / 2;
-    translate(contentX, contentY)
-    // ------------ perchè non funziona con margin????
-
-    // disegno il content x testare che sia tutto corretto
-    // fill("pink");
-    // noStroke();
-    // rect(0, 0, gridWidth, gridHeight); 
-
-    // grid
-    noFill();
-    stroke("black");
-    for (let r = 0; r < nRows; r++) {
-        for (let c = 0; c < nColumns; c++) {
-            let x = c * cellSize;
-            let y = r * cellSize;
-            push()
-            translate(x, y)
-            strokeWeight(1);
-            // rect(0, 0, cellSize, cellSize);
-            drawMap(cellSize)
-            pop()
-
-        }
-    }
+      }
+  }
 }
 
-function drawMap(cellSize) {
-    // griglia 10x10 all'interno di ogni cella
-    strokeWeight(1);
-    let subCellSize = cellSize / 10;
-    let points = [];
-    for (let c = 0; c < 10; c++) {
-        let colPoints = [];
-        for (let r = 0; r < 10; r++) {
-            colPoints.push(false);
-            // let subX = r * subCellSize;
-            // let subY = c * subCellSize;
-        }
-        points.push(colPoints);
-    }
-    console.log(points);
- 
-    for (let i = 0; i < colors.length; i++) {
-        stroke(colors[i]);   
-        let linePoints = [
-            [floor(random(0, 10)) * subCellSize, floor(random(0, 10)) * subCellSize],
-            [floor(random(3, 6)) * subCellSize, floor(random(3, 6)) * subCellSize],
-            [floor(random(0, 10)) * subCellSize, floor(random(0, 10)) * subCellSize]
-        ];
-        for (let j = 0; j < linePoints.length - 1; j++) {
-            line(linePoints[j][0], linePoints[j][1], linePoints[j + 1][0], linePoints[j + 1][1]);
-        }
-    }
+function drawMap(unitSize, scaleRatio) {
+  let gridSize = 10;
+  // griglia 10x10 all'interno di ogni unità della griglia + grande
+  let scaledStroke = 8 * scaleRatio;
+  let unitSmallSize = unitSize / gridSize;
+  let colors = ["blue", "red", "green", "orange", "hotpink"];
+  let linesCount = floor(random(3, colors.length + 1));
+
+  // voglio gestire la griglia di punti per tenere traccia dei punti su cui sono già passata
+  // points[x qualsiasi][y qualsiasi]=true
+  // la matrice points[row][col] verrà impostata true quando una fermata viene "visitata"
+  let points = [];
+  for (let row = 0; row < gridSize; row++) {
+      let singlePoint = [];
+      for (let col = 0; col < gridSize; col++) {
+          singlePoint.push(false);
+      }
+      points.push(singlePoint);
+  }
+
+
+  for (let color = 0; color < linesCount; color++) {
+      stroke(colors[color]);
+      // lunghezza linea metro
+      let [x, y] = [floor(random(3, 6)), floor(random(3, 6))];
+      let stopsCount = floor(random(5, gridSize * scaleRatio));
+      // scelgo il numero di iterazioni in base al numero dei colori
+      for (let stop = 0; stop < stopsCount; stop++) {
+          let nextX, nextY;
+          // CICLO PER DEFINIRE LOGICA DELLE FERMATE 
+          // continua a generare punti a caso finché non ne trova uno che rispetta le condizioni:
+          //    - nextX non deve uscire dalla griglia a sx/dx
+          //    - nextY non deve uscire dalla griglia in alto/basso   
+          //    - se la fermata già stata visitata, ha una probablità 
+          //      random<5% fermarsi anche su un punto visitato
+          do {
+              // floor(random (-1,2) --> -1,0,1 --> 8 pti + vicini nella griglia rispetto alla cella/pto precedente
+              // - - -
+              // - x -
+              // - - -  
+              nextX = x + floor(random(-1, 2));
+              nextY = y + floor(random(-1, 2));
+
+          } while (
+              nextX < 0 || nextX >= gridSize ||
+              nextY < 0 || nextY >= gridSize ||
+              (points[nextX][nextY] && random() > 0.05)
+          );
+          strokeWeight(scaledStroke);
+          line(x * unitSmallSize, y * unitSmallSize, nextX * unitSmallSize, nextY * unitSmallSize);
+          drawStop(x, y, unitSmallSize, scaledStroke);
+          drawStop(nextX, nextY, unitSmallSize, scaledStroke);
+          points[x][y] = true;
+          points[nextX][nextY] = true;
+          x = nextX;
+          y = nextY;
+      }
+  }
 }
-// voglio gestire la griglia di punti points per tenere traccia dei punti su cui sono già passata
-// points[x qualsiasi][y qualsiasi]=true
-// if (points[x qualsiasi][y qualsiasi]) { solo se visitato }
 
-function generateLinePoints(points, subCellSize) {
-    let linePoints = [];
-    while (linePoints.length < 3) { // Creiamo almeno tre punti
-        let x = floor(random(0, 10));
-        let y = floor(random(0, 10));
-
-        if (!points[x][y]) { // Se il punto non è stato visitato
-            points[x][y] = true; // Segnalo come visitato
-            linePoints.push([x * subCellSize, y * subCellSize]);
-        }
-    }
-    return linePoints;
+function drawStop(x, y, unitSmallSize, scaledStroke) {
+  strokeWeight(1);
+  fill("white");
+  circle(x * unitSmallSize, y * unitSmallSize, scaledStroke);
 }
 
 // https://p5js.org/reference/p5/resizeCanvas/ 
 // resizeCanvas() immediately clears the canvas and calls redraw()
 function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
-    redraw();
+  resizeCanvas(windowWidth, windowHeight);
+  redraw();
 }
